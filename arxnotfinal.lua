@@ -4982,7 +4982,6 @@ local availableTraits = {
 local selectedTraits = {}
 
 -- Dropdown cho phép chọn nhiều trait
--- Dropdown cho phép chọn nhiều trait
 TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
     Title = "Select Traits",
     Values = availableTraits,
@@ -4997,13 +4996,12 @@ TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
         end
 
         if #selectedTraits > 0 then
-            print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
+            print("Các trait đã chọn (" .. #selectedTraits .. "): " .. table.concat(selectedTraits, ", "))
         else
             print("Không có trait nào được chọn.")
         end
     end
 })
-
 -- Hàm thực hiện reroll bằng Shards
 local function rerollTraitWithShards()
     if not selectedUnitForReroll then
