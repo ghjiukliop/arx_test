@@ -4948,7 +4948,23 @@ local function getUnitListWithTraits()
 end
 
 
--- Danh sách các trait hiện tại
+
+-- Thêm toggle Auto Reroll Trait vào TraitRerollSection
+local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
+
+-- Dropdown hiển thị danh sách unit và PrimaryTrait
+TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
+    Title = "Choose Unit (with Traits)",
+    Values = getUnitListWithTraits(),
+    Multi = false,
+    Default = "",
+    Callback = function(selectedUnit)
+        selectedUnitForReroll = selectedUnit
+        print("Đã chọn unit:", selectedUnit)
+    end
+})
+
+
 -- Danh sách các trait hiện tại
 local availableTraits = {
     "Blitz",
@@ -4970,7 +4986,7 @@ local availableTraits = {
 }
 
 -- Biến lưu các trait được chọn
-selectedTraits = {}
+    selectedTraits = {}
 
 -- Dropdown cho phép chọn nhiều trait
 TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
@@ -4981,22 +4997,6 @@ TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
     Callback = function(selectedValues)
         selectedTraits = selectedValues
         print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
-    end
-})
-
-
--- Thêm toggle Auto Reroll Trait vào TraitRerollSection
-local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
-
--- Dropdown hiển thị danh sách unit và PrimaryTrait
-TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
-    Title = "Choose Unit (with Traits)",
-    Values = getUnitListWithTraits(),
-    Multi = false,
-    Default = "",
-    Callback = function(selectedUnit)
-        selectedUnitForReroll = selectedUnit
-        print("Đã chọn unit:", selectedUnit)
     end
 })
 
