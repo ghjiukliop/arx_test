@@ -4987,62 +4987,26 @@ local function rerollTraitWithShards()
     print("Đã reroll trait cho unit:", unitName, "bằng Shards")
 end
 
--- Hàm thực hiện reroll bằng Token
-local function rerollTraitWithToken()
-    if not selectedUnitForReroll then
-        warn("Vui lòng chọn unit trước khi thực hiện reroll bằng Token.")
-        return
-    end
+-- Biến toàn cục để theo dõi trạng thái
+local autoRerollShardsEnabled = false
 
-    local unitName = selectedUnitForReroll:match("^(.-) %(") -- Lấy tên unit từ chuỗi
-    if not unitName then
-        warn("Không thể lấy tên unit từ lựa chọn.")
-        return
-    end
-
-    local args = {
-        [1] = game:GetService("ReplicatedStorage").Player_Data.poilkiujhg.Collection:FindFirstChild(unitName),
-        [2] = "Reroll",
-        [3] = "Main",
-        [4] = "Token"
-    }
-
-    game:GetService("ReplicatedStorage").Remote.Server.Gambling.RerollTrait:FireServer(unpack(args))
-    print("Đã reroll trait cho unit:", unitName, "bằng Token")
-end
 
 -- Toggle Auto Reroll Trait với Shards
 TraitRerollSection:AddToggle("AutoRerollShardsToggle", {
     Title = "Auto Reroll with Shards",
     Default = false,
     Callback = function(enabled)
+        autoRerollShardsEnabled = enabled -- Sử dụng biến toàn cục
         if enabled then
             print("Auto Reroll with Shards đã được bật.")
             spawn(function()
-                while wait(1) and enabled do
+                while autoRerollShardsEnabled do
                     rerollTraitWithShards()
+                    wait(1) -- Thời gian chờ giữa các lần reroll
                 end
             end)
         else
             print("Auto Reroll with Shards đã được tắt.")
-        end
-    end
-})
-
--- Toggle Auto Reroll Trait với Token
-TraitRerollSection:AddToggle("AutoRerollTokenToggle", {
-    Title = "Auto Reroll with Token",
-    Default = false,
-    Callback = function(enabled)
-        if enabled then
-            print("Auto Reroll with Token đã được bật.")
-            spawn(function()
-                while wait(1) and enabled do
-                    rerollTraitWithToken()
-                end
-            end)
-        else
-            print("Auto Reroll with Token đã được tắt.")
         end
     end
 })
