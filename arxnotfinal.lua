@@ -4999,7 +4999,6 @@ TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
         print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
     end
 })
-
 -- Hàm thực hiện reroll bằng Shards
 local function rerollTraitWithShards()
     if not selectedUnitForReroll then
