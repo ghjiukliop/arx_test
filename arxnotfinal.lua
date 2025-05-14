@@ -4947,13 +4947,102 @@ local function getUnitListWithTraits()
     return unitList
 end
 
--- Tạo dropdown trong TraitRerollSection
+
+-- Thêm toggle Auto Reroll Trait vào TraitRerollSection
+local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
+
+-- Dropdown hiển thị danh sách unit và PrimaryTrait
 TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
     Title = "Choose Unit (with Traits)",
     Values = getUnitListWithTraits(),
     Multi = false,
     Default = "",
     Callback = function(selectedUnit)
+        selectedUnitForReroll = selectedUnit
         print("Đã chọn unit:", selectedUnit)
+    end
+})
+
+-- Hàm thực hiện reroll bằng Shards
+local function rerollTraitWithShards()
+    if not selectedUnitForReroll then
+        warn("Vui lòng chọn unit trước khi thực hiện reroll bằng Shards.")
+        return
+    end
+
+    local unitName = selectedUnitForReroll:match("^(.-) %(") -- Lấy tên unit từ chuỗi
+    if not unitName then
+        warn("Không thể lấy tên unit từ lựa chọn.")
+        return
+    end
+
+    local args = {
+        [1] = game:GetService("ReplicatedStorage").Player_Data.poilkiujhg.Collection:FindFirstChild(unitName),
+        [2] = "Reroll",
+        [3] = "Main",
+        [4] = "Shards"
+    }
+
+    game:GetService("ReplicatedStorage").Remote.Server.Gambling.RerollTrait:FireServer(unpack(args))
+    print("Đã reroll trait cho unit:", unitName, "bằng Shards")
+end
+
+-- Hàm thực hiện reroll bằng Token
+local function rerollTraitWithToken()
+    if not selectedUnitForReroll then
+        warn("Vui lòng chọn unit trước khi thực hiện reroll bằng Token.")
+        return
+    end
+
+    local unitName = selectedUnitForReroll:match("^(.-) %(") -- Lấy tên unit từ chuỗi
+    if not unitName then
+        warn("Không thể lấy tên unit từ lựa chọn.")
+        return
+    end
+
+    local args = {
+        [1] = game:GetService("ReplicatedStorage").Player_Data.poilkiujhg.Collection:FindFirstChild(unitName),
+        [2] = "Reroll",
+        [3] = "Main",
+        [4] = "Token"
+    }
+
+    game:GetService("ReplicatedStorage").Remote.Server.Gambling.RerollTrait:FireServer(unpack(args))
+    print("Đã reroll trait cho unit:", unitName, "bằng Token")
+end
+
+-- Toggle Auto Reroll Trait với Shards
+TraitRerollSection:AddToggle("AutoRerollShardsToggle", {
+    Title = "Auto Reroll with Shards",
+    Default = false,
+    Callback = function(enabled)
+        if enabled then
+            print("Auto Reroll with Shards đã được bật.")
+            spawn(function()
+                while wait(1) and enabled do
+                    rerollTraitWithShards()
+                end
+            end)
+        else
+            print("Auto Reroll with Shards đã được tắt.")
+        end
+    end
+})
+
+-- Toggle Auto Reroll Trait với Token
+TraitRerollSection:AddToggle("AutoRerollTokenToggle", {
+    Title = "Auto Reroll with Token",
+    Default = false,
+    Callback = function(enabled)
+        if enabled then
+            print("Auto Reroll with Token đã được bật.")
+            spawn(function()
+                while wait(1) and enabled do
+                    rerollTraitWithToken()
+                end
+            end)
+        else
+            print("Auto Reroll with Token đã được tắt.")
+        end
     end
 })
