@@ -4948,14 +4948,41 @@ local function getUnitListWithTraits()
 end
 
 
- 
-
+-- Danh sách các trait hiện tại
 -- Danh sách các trait hiện tại
 local availableTraits = {
-    "Range", "HP", "Damage", "Sniper", "Brute", "Tank", "Investor", "Jack of All",
-    "Crackshot", "Pure Strength", "Juggernaut", "Banker", "Seraph", "Capitalist",
-    "Duplicator", "Sovereign"
+    "Blitz",
+    "Brute",
+    "Capitalist",
+    "Colossal",
+    "Duplicator",
+    "Endure",
+    "Horizon",
+    "Investor",
+    "Jokester",
+    "Juggernaut",
+    "Millionaire",
+    "Seraph",
+    "Sniper",
+    "Sovereign",
+    "Superior",
+    "Violent"
 }
+
+-- Biến lưu các trait được chọn
+selectedTraits = {}
+
+-- Dropdown cho phép chọn nhiều trait
+TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
+    Title = "Select Traits",
+    Values = availableTraits,
+    Multi = true, -- Cho phép chọn nhiều
+    Default = {}, -- Không chọn gì mặc định
+    Callback = function(selectedValues)
+        selectedTraits = selectedValues
+        print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
+    end
+})
 
 -- Biến lưu các trait được chọn
     selectedTraits = {}
