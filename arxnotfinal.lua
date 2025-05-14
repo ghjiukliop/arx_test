@@ -4984,21 +4984,6 @@ TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
     end
 })
 
--- Biến lưu các trait được chọn
-    selectedTraits = {}
-
--- Dropdown cho phép chọn nhiều trait
-TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
-    Title = "Select Traits",
-    Values = availableTraits,
-    Multi = true, -- Cho phép chọn nhiều
-    Default = {}, -- Không chọn gì mặc định
-    Callback = function(selectedValues)
-        selectedTraits = selectedValues
-        print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
-    end
-})
-
 
 -- Thêm toggle Auto Reroll Trait vào TraitRerollSection
 local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
