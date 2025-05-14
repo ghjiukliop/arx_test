@@ -4947,6 +4947,41 @@ local function getUnitListWithTraits()
     return unitList
 end
 
+-- Thêm biến để lưu TextLabel hiển thị trait hiện tại
+local currentTraitLabel = nil
+
+-- Dropdown hiển thị danh sách unit và PrimaryTrait
+TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
+    Title = "Choose Unit (with Traits)",
+    Values = getUnitListWithTraits(),
+    Multi = false,
+    Default = "",
+    Callback = function(selectedUnit)
+        selectedUnitForReroll = selectedUnit
+        print("Đã chọn unit:", selectedUnit)
+
+        -- Lấy trait hiện tại của unit đã chọn
+        local unitName = selectedUnit:match("^(.-) %(") -- Lấy tên unit từ chuỗi
+        local primaryTrait = "None"
+        if unitName then
+            local unit = game:GetService("ReplicatedStorage").Player_Data.poilkiujhg.Collection:FindFirstChild(unitName)
+            if unit and unit:FindFirstChild("PrimaryTrait") then
+                primaryTrait = unit.PrimaryTrait.Value
+            end
+        end
+
+        -- Cập nhật TextLabel hiển thị trait hiện tại
+        if currentTraitLabel then
+            currentTraitLabel:Set("Current Trait: " .. primaryTrait)
+        end
+    end
+})
+
+-- Thêm TextLabel để hiển thị trait hiện tại
+currentTraitLabel = TraitRerollSection:AddParagraph({
+    Title = "",
+    Content = "Current Trait: None" -- Mặc định là None
+})
 
 -- Thêm toggle Auto Reroll Trait vào TraitRerollSection
 local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
