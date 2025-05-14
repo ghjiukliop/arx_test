@@ -4948,69 +4948,7 @@ local function getUnitListWithTraits()
 end
 
 
--- Thêm toggle Auto Reroll Trait vào TraitRerollSection
-local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
-
--- Dropdown hiển thị danh sách unit và PrimaryTrait
-TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
-    Title = "Choose Unit (with Traits)",
-    Values = getUnitListWithTraits(),
-    Multi = false,
-    Default = "",
-    Callback = function(selectedUnit)
-        selectedUnitForReroll = selectedUnit
-        print("Đã chọn unit:", selectedUnit)
-    end
-})
-
--- Hàm thực hiện reroll bằng Shards
-local function rerollTraitWithShards()
-    if not selectedUnitForReroll then
-        warn("Vui lòng chọn unit trước khi thực hiện reroll bằng Shards.")
-        return
-    end
-
-    local unitName = selectedUnitForReroll:match("^(.-) %(") -- Lấy tên unit từ chuỗi
-    if not unitName then
-        warn("Không thể lấy tên unit từ lựa chọn.")
-        return
-    end
-
-    local args = {
-        [1] = game:GetService("ReplicatedStorage").Player_Data.poilkiujhg.Collection:FindFirstChild(unitName),
-        [2] = "Reroll",
-        [3] = "Main",
-        [4] = "Shards"
-    }
-
-    game:GetService("ReplicatedStorage").Remote.Server.Gambling.RerollTrait:FireServer(unpack(args))
-    print("Đã reroll trait cho unit:", unitName, "bằng Shards")
-end
-
--- Biến toàn cục để theo dõi trạng thái
-local autoRerollShardsEnabled = false
-
-
--- Toggle Auto Reroll Trait với Shards
-TraitRerollSection:AddToggle("AutoRerollShardsToggle", {
-    Title = "Auto Reroll with Shards",
-    Default = false,
-    Callback = function(enabled)
-        autoRerollShardsEnabled = enabled -- Sử dụng biến toàn cục
-        if enabled then
-            print("Auto Reroll with Shards đã được bật.")
-            spawn(function()
-                while autoRerollShardsEnabled do
-                    rerollTraitWithShards()
-                    wait(1) -- Thời gian chờ giữa các lần reroll
-                end
-            end)
-        else
-            print("Auto Reroll with Shards đã được tắt.")
-        end
-    end
-})
-
+ 
 
 -- Danh sách các trait hiện tại
 local availableTraits = {
@@ -5031,5 +4969,82 @@ TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
     Callback = function(selectedValues)
         selectedTraits = selectedValues
         print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
+    end
+})
+
+
+-- Thêm toggle Auto Reroll Trait vào TraitRerollSection
+local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
+
+-- Dropdown hiển thị danh sách unit và PrimaryTrait
+TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
+    Title = "Choose Unit (with Traits)",
+    Values = getUnitListWithTraits(),
+    Multi = false,
+    Default = "",
+    Callback = function(selectedUnit)
+        selectedUnitForReroll = selectedUnit
+        print("Đã chọn unit:", selectedUnit)
+    end
+})
+
+-- Hàm thực hiện reroll bằng Shards
+local function rerollTraitWithShards()
+    if not selectedUnitForReroll then
+        warn("Vui lòng chọn unit trước khi thực hiện reroll bằng Shards.")
+        return false
+    end
+
+    local unitName = selectedUnitForReroll:match("^(.-) %(") -- Lấy tên unit từ chuỗi
+    if not unitName then
+        warn("Không thể lấy tên unit từ lựa chọn.")
+        return false
+    end
+
+    local unit = game:GetService("ReplicatedStorage").Player_Data.poilkiujhg.Collection:FindFirstChild(unitName)
+    if not unit then
+        warn("Không tìm thấy unit trong Collection.")
+        return false
+    end
+
+    local currentTrait = unit:FindFirstChild("PrimaryTrait") and unit.PrimaryTrait.Value or "None"
+    if table.find(selectedTraits, currentTrait) then
+        print("Unit đã đạt trait mong muốn:", currentTrait)
+        return true -- Dừng reroll nếu đạt trait mong muốn
+    end
+
+    local args = {
+        [1] = unit,
+        [2] = "Reroll",
+        [3] = "Main",
+        [4] = "Shards"
+    }
+
+    game:GetService("ReplicatedStorage").Remote.Server.Gambling.RerollTrait:FireServer(unpack(args))
+    print("Đã reroll trait cho unit:", unitName, "bằng Shards. Trait hiện tại:", currentTrait)
+    return false -- Tiếp tục reroll nếu chưa đạt trait mong muốn
+end
+
+-- Toggle Auto Reroll Trait với Shards
+TraitRerollSection:AddToggle("AutoRerollShardsToggle", {
+    Title = "Auto Reroll with Shards",
+    Default = false,
+    Callback = function(enabled)
+        autoRerollShardsEnabled = enabled -- Sử dụng biến toàn cục
+        if enabled then
+            print("Auto Reroll with Shards đã được bật.")
+            spawn(function()
+                while autoRerollShardsEnabled do
+                    local success = rerollTraitWithShards()
+                    if success then
+                        print("Đã đạt trait mong muốn. Dừng Auto Reroll.")
+                        break -- Thoát vòng lặp nếu đạt trait mong muốn
+                    end
+                    wait(1) -- Thời gian chờ giữa các lần reroll
+                end
+            end)
+        else
+            print("Auto Reroll with Shards đã được tắt.")
+        end
     end
 })
