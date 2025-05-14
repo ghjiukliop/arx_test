@@ -707,12 +707,6 @@ local PlayTab = Window:AddTab({
     Icon = "rbxassetid://7743871480"
 })
 
--- Thêm tab Priority
-local PriorityTab = Window:AddTab({
-    Title = "Priority",
-    Icon = "rbxassetid://1234567890" -- Thay bằng ID icon bạn muốn
-})
-
 -- Tạo tab In-Game
 local InGameTab = Window:AddTab({
     Title = "In-Game",
@@ -2435,37 +2429,39 @@ ChallengeSection:AddToggle("AutoChallengeToggle", {
         autoChallengeEnabled = Value
         ConfigSystem.CurrentConfig.AutoChallenge = Value
         ConfigSystem.SaveConfig()
-
+        
         if Value then
-            print("Auto Challenge đã được bật")
+            -- Kiểm tra ngay lập tức nếu người chơi đang ở trong map
+            if isPlayerInMap() then
+                print("Đang ở trong map, Auto Challenge sẽ hoạt động khi bạn rời khỏi map")
+            else
+                print("Auto Challenge đã được bật, sẽ bắt đầu sau " .. challengeTimeDelay .. " giây")
+                
+                -- Thực hiện join Challenge sau thời gian delay
+                spawn(function()
+                    wait(challengeTimeDelay)
+                    if autoChallengeEnabled and not isPlayerInMap() then
+                        joinChallenge()
+                    end
+                end)
+            end
+            
+            -- Tạo vòng lặp Auto Join Challenge
             spawn(function()
-                while autoChallengeEnabled and wait(10) do
+                while autoChallengeEnabled and wait(10) do -- Thử join challenge mỗi 10 giây
+                    -- Chỉ thực hiện join challenge nếu người chơi không ở trong map
                     if not isPlayerInMap() then
-                        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-                        local playerName = game:GetService("Players").LocalPlayer.Name
-
-                        -- Kiểm tra khả năng tham gia Challenge
-                        local playerData = ReplicatedStorage:FindFirstChild("Player_Data")
-                        local playerFolder = playerData and playerData:FindFirstChild(playerName)
-                        local chapterLevels = playerFolder and playerFolder:FindFirstChild("ChapterLevels")
-                        local challengeChapter = ReplicatedStorage:FindFirstChild("Gameplay")
-                            and ReplicatedStorage.Gameplay.Game.Challenge:FindFirstChild("Chapter")
-
-                        if chapterLevels and challengeChapter and challengeChapter:IsA("StringValue") then
-                            local challengeName = challengeChapter.Value
-                            print("Challenge hiện tại:", challengeName)
-
-                            if chapterLevels:FindFirstChild(challengeName) then
-                                print("Đi được, đang tham gia Challenge...")
-                                joinChallenge()
-                            else
-                                print("Không đi được, không thể tham gia Challenge.")
-                            end
-                        else
-                            warn("Dữ liệu không hợp lệ hoặc thiếu")
+                        -- Áp dụng time delay
+                        print("Đợi " .. challengeTimeDelay .. " giây trước khi join Challenge")
+                        wait(challengeTimeDelay)
+                        
+                        -- Kiểm tra lại sau khi delay
+                        if autoChallengeEnabled and not isPlayerInMap() then
+                            joinChallenge()
                         end
                     else
-                        print("Đang ở trong map, đợi rời khỏi map để tham gia Challenge.")
+                        -- Người chơi đang ở trong map, không cần join
+                        print("Đang ở trong map, đợi đến khi người chơi rời khỏi map")
                     end
                 end
             end)
@@ -5521,33 +5517,3 @@ TraitRerollSection:AddButton({
         end
     end
 })
-
-local PrioritySection = PriorityTab:AddSection("Priority Settings")
-
-
--- Biến lưu trạng thái Auto Join Priority
-local autoJoinPriorityEnabled = ConfigSystem.CurrentConfig.AutoJoinPriority or false
-local autoJoinPriorityLoop = nil
--- Danh sách các mode
-local availableModes = {"Story", "Ranger Stage", "Boss Event", "Challenge", "Easter Egg", "None"}
-
--- Biến lưu thứ tự ưu tiên
-local priorityOrder = {"None", "None", "None", "None", "None"}
-
--- Tạo 5 dropdown cho thứ tự ưu tiên
-for i = 1, 5 do
-    PrioritySection:AddDropdown("PriorityDropdown" .. i, {
-        Title = "Priority Slot " .. i,
-        Values = availableModes,
-        Multi = false,
-        Default = ConfigSystem.CurrentConfig["PrioritySlot" .. i] or "None", -- Lấy giá trị từ JSON hoặc mặc định là "None"
-        Callback = function(Value)
-            priorityOrder[i] = Value -- Cập nhật thứ tự ưu tiên
-            ConfigSystem.CurrentConfig["PrioritySlot" .. i] = Value -- Lưu vào cấu hình
-            ConfigSystem.SaveConfig() -- Lưu cấu hình vào file JSON
-            
-            print("Đã chọn Priority Slot " .. i .. ": " .. Value)
-        end
-    })
-end
-
