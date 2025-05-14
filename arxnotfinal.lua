@@ -4906,5 +4906,54 @@ StatsPotentialSection:AddToggle("RollStatsPotentialToggle", {
     end
 })
 
+
 -- Thêm section Trait Reroll trong tab Unit
 local TraitRerollSection = UnitTab:AddSection("Trait Reroll")
+
+-- Thêm dropdown hiển thị danh sách unit và PrimaryTrait
+local function getUnitListWithTraits()
+    local collectionFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Player_Data")
+        and game.ReplicatedStorage.Player_Data:FindFirstChild("poilkiujhg")
+        and game.ReplicatedStorage.Player_Data.poilkiujhg:FindFirstChild("Collection")
+
+    if not collectionFolder then
+        warn("Không tìm thấy thư mục Collection!")
+        return {}
+    end
+
+    local unitList = {}
+    local unitCountMap = {}
+
+    -- Lặp qua các unit trong Collection
+    for _, unit in pairs(collectionFolder:GetChildren()) do
+        if unit:IsA("Folder") or unit:IsA("Model") then
+            local unitName = unit.Name
+            local primaryTrait = unit:FindFirstChild("PrimaryTrait") and unit.PrimaryTrait.Value or "None"
+
+            -- Đếm số lượng unit trùng tên
+            unitCountMap[unitName] = (unitCountMap[unitName] or 0) + 1
+            local displayName = unitName .. " (Trait: " .. primaryTrait .. ")"
+
+            -- Nếu có trùng tên, thêm số thứ tự
+            if unitCountMap[unitName] > 1 then
+                displayName = displayName .. " #" .. unitCountMap[unitName]
+            end
+
+            table.insert(unitList, displayName)
+        end
+    end
+
+    table.sort(unitList) -- Sắp xếp danh sách theo thứ tự bảng chữ cái
+    return unitList
+end
+
+-- Tạo dropdown trong TraitRerollSection
+TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
+    Title = "Choose Unit (with Traits)",
+    Values = getUnitListWithTraits(),
+    Multi = false,
+    Default = "",
+    Callback = function(selectedUnit)
+        print("Đã chọn unit:", selectedUnit)
+    end
+})
