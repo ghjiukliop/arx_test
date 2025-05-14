@@ -312,7 +312,7 @@ end
 
 -- Delay 30 giây trước khi mở script
 print("HT Hub | Anime Rangers X đang khởi động, vui lòng đợi 15 giây...")
-wait(15)
+wait(1)
 print("Đang tải script...")
 
 -- Tải thư viện Fluent
@@ -4912,12 +4912,12 @@ local TraitRerollSection = UnitTab:AddSection("Trait Reroll")
 
 -- Thêm dropdown hiển thị danh sách unit và PrimaryTrait
 local function getUnitListWithTraits()
-    local collectionFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Player_Data")
-        and game.ReplicatedStorage.Player_Data:FindFirstChild("poilkiujhg")
-        and game.ReplicatedStorage.Player_Data.poilkiujhg:FindFirstChild("Collection")
+    local player = game:GetService("Players").LocalPlayer
+    local playerData = game:GetService("ReplicatedStorage"):FindFirstChild("Player_Data")
+    local collectionFolder = playerData and playerData:FindFirstChild(player.Name) and playerData[player.Name]:FindFirstChild("Collection")
 
     if not collectionFolder then
-        warn("Không tìm thấy thư mục Collection!")
+        warn("Không tìm thấy thư mục Collection của người chơi!")
         return {}
     end
 
@@ -4946,8 +4946,6 @@ local function getUnitListWithTraits()
     table.sort(unitList) -- Sắp xếp danh sách theo thứ tự bảng chữ cái
     return unitList
 end
-
-
 
 -- Thêm toggle Auto Reroll Trait vào TraitRerollSection
 local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
