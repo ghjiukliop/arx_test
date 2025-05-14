@@ -4982,14 +4982,25 @@ local availableTraits = {
 local selectedTraits = {}
 
 -- Dropdown cho phép chọn nhiều trait
+-- Dropdown cho phép chọn nhiều trait
 TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
     Title = "Select Traits",
     Values = availableTraits,
     Multi = true, -- Cho phép chọn nhiều
     Default = {}, -- Không chọn gì mặc định
     Callback = function(selectedValues)
-        selectedTraits = selectedValues
-        print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
+        selectedTraits = {} -- Reset danh sách trước khi cập nhật
+        for trait, isSelected in pairs(selectedValues) do
+            if isSelected then
+                table.insert(selectedTraits, trait)
+            end
+        end
+
+        if #selectedTraits > 0 then
+            print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
+        else
+            print("Không có trait nào được chọn.")
+        end
     end
 })
 
