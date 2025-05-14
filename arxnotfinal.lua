@@ -4906,11 +4906,10 @@ StatsPotentialSection:AddToggle("RollStatsPotentialToggle", {
     end
 })
 
-
 -- Thêm section Trait Reroll trong tab Unit
 local TraitRerollSection = UnitTab:AddSection("Trait Reroll")
 
--- Thêm dropdown hiển thị danh sách unit và PrimaryTrait
+-- Hàm lấy danh sách unit và PrimaryTrait
 local function getUnitListWithTraits()
     local player = game:GetService("Players").LocalPlayer
     local playerData = game:GetService("ReplicatedStorage"):FindFirstChild("Player_Data")
@@ -4947,8 +4946,8 @@ local function getUnitListWithTraits()
     return unitList
 end
 
--- Thêm toggle Auto Reroll Trait vào TraitRerollSection
-local selectedUnitForReroll = nil -- Biến lưu unit được chọn từ dropdown
+-- Biến lưu unit được chọn từ dropdown
+local selectedUnitForReroll = nil
 
 -- Dropdown hiển thị danh sách unit và PrimaryTrait
 TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
@@ -4962,29 +4961,25 @@ TraitRerollSection:AddDropdown("UnitDropdownWithTraits", {
     end
 })
 
-
 -- Danh sách các trait hiện tại
 local availableTraits = {
-    "Blitz",
     "Brute",
-    "Capitalist",
+    "Sniper",
     "Colossal",
-    "Duplicator",
-    "Endure",
-    "Horizon",
     "Investor",
     "Jokester",
+    "Blitz",
     "Juggernaut",
     "Millionaire",
+    "Violent",
     "Seraph",
-    "Sniper",
-    "Sovereign",
-    "Superior",
-    "Violent"
+    "Capitalist",
+    "Duplicator",
+    "Sovereign"
 }
 
 -- Biến lưu các trait được chọn
-    selectedTraits = {}
+local selectedTraits = {}
 
 -- Dropdown cho phép chọn nhiều trait
 TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
@@ -4997,6 +4992,7 @@ TraitRerollSection:AddDropdown("TraitSelectionDropdown", {
         print("Các trait đã chọn:", table.concat(selectedTraits, ", "))
     end
 })
+
 -- Hàm thực hiện reroll bằng Shards
 local function rerollTraitWithShards()
     if not selectedUnitForReroll then
@@ -5010,7 +5006,8 @@ local function rerollTraitWithShards()
         return false
     end
 
-    local unit = game:GetService("ReplicatedStorage").Player_Data.poilkiujhg.Collection:FindFirstChild(unitName)
+    local player = game:GetService("Players").LocalPlayer
+    local unit = game:GetService("ReplicatedStorage").Player_Data:FindFirstChild(player.Name).Collection:FindFirstChild(unitName)
     if not unit then
         warn("Không tìm thấy unit trong Collection.")
         return false
