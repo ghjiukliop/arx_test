@@ -2400,7 +2400,7 @@ local PrioritySection = PriorityTab:AddSection("Priority Settings")
 local autoJoinPriorityEnabled = ConfigSystem.CurrentConfig.AutoJoinPriority or false
 local autoJoinPriorityLoop = nil
 -- Danh sách các mode
-local availableModes = {"Story", "Ranger Stage", "Boss Event", "Challenge", "Easter Egg", "None"}
+local availableModes = {"Story", "Ranger Stage", "Boss Event", "Challenge", "Easter Egg", "Highest Story", "None"}
 
 -- Biến lưu thứ tự ưu tiên
 local priorityOrder = {"None", "None", "None", "None", "None"}
@@ -2421,8 +2421,7 @@ for i = 1, 5 do
         end
     })
 end
-
--- Cập nhật hàm Auto Join Priority để bỏ qua "None"
+-- Cập nhật hàm Auto Join Priority để bao gồm "Highest Story"
 local function autoJoinPriority()
     if not autoJoinPriorityEnabled or isPlayerInMap() then
         return
@@ -2432,12 +2431,16 @@ local function autoJoinPriority()
     for _, mode in ipairs(priorityOrder) do
         if mode ~= "None" then
             local success = false
+
             if mode == "Story" then
                 success = joinMap()
+
             elseif mode == "Ranger Stage" then
                 success = joinRangerStage()
+
             elseif mode == "Boss Event" then
                 success = joinBossEvent()
+
             elseif mode == "Challenge" then
                 -- Kiểm tra khả năng tham gia Challenge
                 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -2462,8 +2465,14 @@ local function autoJoinPriority()
                 else
                     warn("Dữ liệu Challenge không hợp lệ hoặc thiếu.")
                 end
+
             elseif mode == "Easter Egg" then
                 success = joinEasterEggEvent()
+
+            elseif mode == "Highest Story" then
+                print("Đang thực hiện join Highest Story...")
+                findAndJoinHighestStory()
+                success = true
             end
 
             -- Nếu tham gia thành công, dừng vòng lặp
@@ -2478,6 +2487,7 @@ local function autoJoinPriority()
 
     print("Không có mode nào khả dụng để tham gia.")
 end
+
 
 -- Tự động tải thứ tự ưu tiên từ cấu hình khi khởi động
 spawn(function()
