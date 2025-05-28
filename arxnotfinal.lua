@@ -724,11 +724,6 @@ local PlayTab = Window:AddTab({
     Icon = "rbxassetid://7743871480"
 })
 
--- Tạo tab event
-local PlayTab = Window:AddTab({
-    Title = "event",
-    Icon = "rbxassetid://6034177726"
-})
 
 -- Tạo tab In-Game
 local InGameTab = Window:AddTab({
