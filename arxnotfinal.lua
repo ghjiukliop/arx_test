@@ -1,3 +1,4 @@
+
 -- Anime Rangers X Script
 
 -- Kiểm tra Place ID
@@ -335,7 +336,7 @@ end
 
 -- Delay 30 giây trước khi mở script
 print("HT Hub | Anime Rangers X đang khởi động, vui lòng đợi 10 giây...")
-wait(5)
+wait(10)
 print("Đang tải script...")
 
 -- Tải thư viện Fluent
@@ -445,7 +446,9 @@ ConfigSystem.DefaultConfig = {
     -- Cài đặt Challenge
     AutoChallenge = false,
     ChallengeTimeDelay = 5,
-
+    -- event  Cid 
+    AutoJoinCidEvent = false,
+     AutoJoinCidTimer = 10,
     -- Cài đặt In-Game
     AutoPlay = false,
     AutoRetry = false,
@@ -701,6 +704,7 @@ local autoHideUITimer = nil
 -- Thông tin người chơi
 local playerName = game:GetService("Players").LocalPlayer.Name
 
+
 -- Tạo Window
 local Window = Fluent:CreateWindow({
     Title = "HT Hub | Anime Rangers X",
@@ -711,6 +715,7 @@ local Window = Fluent:CreateWindow({
     Theme = ConfigSystem.CurrentConfig.UITheme or "Dark",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
+
 
 -- Tạo tab Info
 local InfoTab = Window:AddTab({
@@ -723,7 +728,6 @@ local PlayTab = Window:AddTab({
     Title = "Play",
     Icon = "rbxassetid://7743871480"
 })
-
 
 -- Tạo tab In-Game
 local InGameTab = Window:AddTab({
@@ -2601,6 +2605,88 @@ ChallengeSection:AddToggle("AutoChallengeToggle", {
             end)
         else
             print("Auto Challenge đã được tắt")
+        end
+    end
+})
+
+-- atuo cid event 
+    -- Biến cấu hình Auto Join Cid Event
+local autoJoinCidEnabled = ConfigSystem.CurrentConfig.AutoJoinCidEvent or false
+local autoJoinCidTimer = ConfigSystem.CurrentConfig.AutoJoinCidTimer or 10
+local autoJoinCidThread = nil
+
+-- Thêm mục vào Tab Play
+local PlaySection = PlayTab:AddSection("Cid Event")
+
+-- 🔘 Toggle bật/tắt Auto Join Cid Event
+PlaySection:AddToggle("AutoJoinCidToggle", {
+    Title = "Auto Join Cid Event",
+    Default = autoJoinCidEnabled,
+    Callback = function(value)
+        autoJoinCidEnabled = value
+        ConfigSystem.CurrentConfig.AutoJoinCidEvent = value
+        ConfigSystem.SaveConfig()
+
+        if value then
+            Fluent:Notify({
+                Title = "Cid Event",
+                Content = "Auto Join Cid Event đã bật!",
+                Duration = 3
+            })
+
+            -- Tạo luồng chạy tự động
+            if autoJoinCidThread then
+                task.cancel(autoJoinCidThread)
+            end
+
+            autoJoinCidThread = task.spawn(function()
+                while autoJoinCidEnabled do
+                    -- Đếm ngược
+                    for i = autoJoinCidTimer, 1, -1 do
+                        print("⏱️ Tham gia Cid Event sau " .. i .. " giây...")
+                        wait(1)
+                        if not autoJoinCidEnabled then return end -- Nếu người dùng tắt toggle trong lúc chờ
+                    end
+
+                    -- Kiểm tra level hiện tại
+                    local level = game:GetService("ReplicatedStorage").Values.Game.Level.Value
+                    if level == "Cid_Event" then
+                        print("🔁 Hiện đang ở Cid_Event. Không join lại.")
+                    else
+                        game:GetService("ReplicatedStorage").Remote.Server.PlayRoom.Event:FireServer("Boss-Event")
+                        print("✅ Đã gửi yêu cầu tham gia Cid Event.")
+                    end
+                end
+            end)
+        else
+            Fluent:Notify({
+                Title = "Cid Event",
+                Content = "Auto Join Cid Event đã tắt!",
+                Duration = 3
+            })
+
+            if autoJoinCidThread then
+                task.cancel(autoJoinCidThread)
+            end
+        end
+    end
+})
+
+-- ⏱️ Input để cài thời gian đếm ngược
+PlaySection:AddInput("CidEventTimerInput", {
+    Title = "Set Join Timer (giây)",
+    Default = tostring(autoJoinCidTimer),
+    Placeholder = "Nhập số giây...",
+    Numeric = true,
+    Callback = function(value)
+        local num = tonumber(value)
+        if num and num >= 1 then
+            autoJoinCidTimer = num
+            ConfigSystem.CurrentConfig.AutoJoinCidTimer = num
+            ConfigSystem.SaveConfig()
+            print("🕓 Timer mới được đặt: " .. num .. " giây.")
+        else
+            warn("⚠️ Vui lòng nhập số nguyên >= 1.")
         end
     end
 })
