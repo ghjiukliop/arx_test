@@ -655,9 +655,7 @@ local rangerFriendOnly = ConfigSystem.CurrentConfig.RangerFriendOnly or false
 local autoJoinRangerEnabled = ConfigSystem.CurrentConfig.AutoJoinRanger or false
 local autoJoinRangerLoop = nil
 
--- Biến lưu trạng thái Boss Event
-local autoBossEventEnabled = ConfigSystem.CurrentConfig.AutoBossEvent or false
-local autoBossEventLoop = nil
+
 
 -- Biến lưu trạng thái Challenge
 local autoChallengeEnabled = ConfigSystem.CurrentConfig.AutoChallenge or false
@@ -2609,13 +2607,7 @@ ChallengeSection:AddToggle("AutoChallengeToggle", {
     end
 })
 
--- atuo cid event 
-    -- Biến cấu hình Auto Join Cid Event
-local autoJoinCidEnabled = ConfigSystem.CurrentConfig.AutoJoinCidEvent or false
-local autoJoinCidTimer = ConfigSystem.CurrentConfig.AutoJoinCidTimer or 10
-local autoJoinCidThread = nil
-
--- Thêm mục vào Tab Play
+--a
 local PlaySection = PlayTab:AddSection("Cid Event")
 
 -- 🔘 Toggle bật/tắt Auto Join Cid Event
@@ -2690,7 +2682,6 @@ PlaySection:AddInput("CidEventTimerInput", {
         end
     end
 })
-
 -- Thêm section In-Game Controls
 local InGameSection = InGameTab:AddSection("Game Controls")
 
