@@ -335,7 +335,7 @@ end
 
 -- Delay 30 giây trước khi mở script
 print("HT Hub | Anime Rangers X đang khởi động, vui lòng đợi 10 giây...")
-wait(10)
+wait(5)
 print("Đang tải script...")
 
 -- Tải thư viện Fluent
@@ -727,7 +727,7 @@ local PlayTab = Window:AddTab({
 -- Tạo tab event
 local PlayTab = Window:AddTab({
     Title = "event",
-    Icon = "rbxassetid://7229442422"
+    Icon = "rbxassetid://6034177726"
 })
 
 -- Tạo tab In-Game
