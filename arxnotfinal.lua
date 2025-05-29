@@ -731,11 +731,10 @@ local PlayTab = Window:AddTab({
     Title = "Play",
     Icon = "rbxassetid://7743871480"
 })
-
--- Tạo tab Settings
-local SettingsTab = Window:AddTab({
-    Title = "Settings",
-    Icon = "rbxassetid://6031280882"
+-- Tạo tab Event
+local EventTab = Window:AddTab({
+    Title = "Event",
+    Icon = "rbxassetid://7734056608" -- Icon cho tab Event
 })
 
 -- Tạo tab In-Game
