@@ -2620,8 +2620,22 @@ ChallengeSection:AddToggle("AutoChallengeToggle", {
     end
 })
 
+
+
 -- Section: Cid Event trong tab Event
 local CidEventSection = EventTab:AddSection("Cid Event")
+
+-- Kiểm tra xem CidEventSection có hợp lệ không
+if not CidEventSection or not CidEventSection.AddTextbox then
+    warn("CidEventSection không hỗ trợ AddTextbox. Kiểm tra phiên bản Fluent hoặc cấu hình EventTab.")
+    -- Fallback: Tạo một thông báo trong UI nếu AddTextbox không khả dụng
+    Fluent:Notify({
+        Title = "Lỗi UI",
+        Content = "Không thể tạo TextBox cho Cid Event. Vui lòng kiểm tra executor hoặc phiên bản script.",
+        Duration = 5
+    })
+    return -- Dừng thực thi phần này
+end
 
 -- Hàm kiểm tra xem người chơi có đang ở trong map không
 local function isPlayerInMap()
@@ -2745,8 +2759,6 @@ CidEventSection:AddToggle("AutoJoinCidEventToggle", {
         end
     end
 })
-
-
 
 
 -- Thêm section In-Game Controls
