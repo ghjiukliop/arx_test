@@ -445,6 +445,7 @@ ConfigSystem.DefaultConfig = {
     -- Cài đặt Challenge
     AutoChallenge = false,
     ChallengeTimeDelay = 5, 
+    
     -- Cài đặt Cid Event
     AutoJoinCidEvent = false, -- Cài đặt cho Auto Join Cid Event
     CidEventTimeDelay = 5,
@@ -654,19 +655,19 @@ local rangerFriendOnly = ConfigSystem.CurrentConfig.RangerFriendOnly or false
 local autoJoinRangerEnabled = ConfigSystem.CurrentConfig.AutoJoinRanger or false
 local autoJoinRangerLoop = nil
 
--- Biến lưu trạng thái Boss Event
-local autoBossEventEnabled = ConfigSystem.CurrentConfig.AutoBossEvent or false
-local autoBossEventLoop = nil
+
+
 
 -- Biến lưu trạng thái Challenge
 local autoChallengeEnabled = ConfigSystem.CurrentConfig.AutoChallenge or false
-local autoChallengeLoop = nil
+
 local challengeTimeDelay = ConfigSystem.CurrentConfig.ChallengeTimeDelay or 5
 -- 
 -- Biến lưu trạng thái và thời gian chờ Auto Join Cid Event
 local autoJoinCidEventEnabled = ConfigSystem.CurrentConfig.AutoJoinCidEvent or false
-local cidEventTimeDelay = ConfigSystem.CurrentConfig.CidEventTimeDelay or 5 -- Thời gian chờ mặc định
+local cidEventTimeDelay = ConfigSystem.CurrentConfig.CidEventTimeDelay or 5
 local autoJoinCidEventLoop = nil
+
 -- Biến lưu trạng thái In-Game
 local autoPlayEnabled = ConfigSystem.CurrentConfig.AutoPlay or false
 local autoRetryEnabled = ConfigSystem.CurrentConfig.AutoRetry or false
@@ -694,7 +695,7 @@ local unitSlots = {}
 -- Biến lưu trạng thái Time Delay
 local storyTimeDelay = ConfigSystem.CurrentConfig.StoryTimeDelay or 5
 local rangerTimeDelay = ConfigSystem.CurrentConfig.RangerTimeDelay or 5
-local bossEventTimeDelay = ConfigSystem.CurrentConfig.BossEventTimeDelay or 5
+
 
 -- Biến lưu trạng thái AFK
 local autoJoinAFKEnabled = ConfigSystem.CurrentConfig.AutoJoinAFK or false
@@ -731,6 +732,12 @@ local PlayTab = Window:AddTab({
     Icon = "rbxassetid://7743871480"
 })
 
+-- Tạo tab Settings
+local SettingsTab = Window:AddTab({
+    Title = "Settings",
+    Icon = "rbxassetid://6031280882"
+})
+
 -- Tạo tab In-Game
 local InGameTab = Window:AddTab({
     Title = "In-Game",
@@ -760,12 +767,6 @@ local ShopTab = Window:AddTab({
 local WebhookTab = Window:AddTab({
     Title = "Webhook",
     Icon = "rbxassetid://7734058803"
-})
-
--- Tạo tab Settings
-local SettingsTab = Window:AddTab({
-    Title = "Settings",
-    Icon = "rbxassetid://6031280882"
 })
 
 
@@ -2614,113 +2615,6 @@ ChallengeSection:AddToggle("AutoChallengeToggle", {
     end
 })
 
--- Cid event
--- Thêm section Boss Event trong tab Play
-local BossEventSection = PlayTab:AddSection("Boss Event")
-
--- Hàm để tham gia Cid Event
-local function joinCidEvent()
-    local success, err = pcall(function()
-        local level = safeGetPath(game:GetService("ReplicatedStorage"), { "Values", "Game", "Level" }, 0.5)
-        if not level or not level.Value then
-            warn("Không tìm thấy giá trị Level")
-            return false
-        end
-
-        if level.Value == "Cid_Event" then
-            print("Không tham gia sự kiện Boss Event vì Level là Cid_Event")
-            return false
-        else
-            local args = { "Boss-Event" }
-            local event = safeGetPath(game:GetService("ReplicatedStorage"), { "Remote", "Server", "PlayRoom", "Event" }, 2)
-            if event then
-                event:FireServer(unpack(args))
-                print("Tham gia sự kiện Boss Event thành công!")
-                return true
-            else
-                warn("Không tìm thấy Event để tham gia Boss Event")
-                return false
-            end
-        end
-    end)
-
-    if not success then
-        warn("Lỗi khi tham gia Cid Event: " .. tostring(err))
-        return false
-    end
-    return success
-end
-
--- TextBox để nhập thời gian chờ Auto Join Cid Event
-BossEventSection:AddTextbox("CidEventTimeDelayInput", {
-    Title = "Cid Event Time Delay (seconds)",
-    Default = tostring(ConfigSystem.CurrentConfig.CidEventTimeDelay or 5),
-    Placeholder = "Nhập thời gian chờ (giây)...",
-    Callback = function(Value)
-        local number = tonumber(Value)
-        if number and number > 0 then
-            cidEventTimeDelay = number
-            ConfigSystem.CurrentConfig.CidEventTimeDelay = number
-            ConfigSystem.SaveConfig()
-            print("Thời gian chờ Auto Join Cid Event được đặt thành: " .. number .. " giây")
-        else
-            Fluent:Notify({
-                Title = "Lỗi",
-                Content = "Vui lòng nhập một số dương hợp lệ cho thời gian chờ.",
-                Duration = 3
-            })
-        end
-    end
-})
-
--- Toggle Auto Join Cid Event
-BossEventSection:AddToggle("AutoJoinCidEventToggle", {
-    Title = "Auto Join Cid Event",
-    Default = ConfigSystem.CurrentConfig.AutoJoinCidEvent or false,
-    Callback = function(Value)
-        autoJoinCidEventEnabled = Value
-        ConfigSystem.CurrentConfig.AutoJoinCidEvent = Value
-        ConfigSystem.SaveConfig()
-
-        if Value then
-            print("Auto Join Cid Event đã được bật")
-            if isPlayerInMap() then
-                print("Đang ở trong map, Auto Join Cid Event sẽ hoạt động khi bạn rời khỏi map")
-            else
-                -- Thực hiện join ngay lập tức nếu không ở trong map
-                spawn(function()
-                    wait(cidEventTimeDelay)
-                    if autoJoinCidEventEnabled and not isPlayerInMap() then
-                        joinCidEvent()
-                    end
-                end)
-            end
-
-            -- Tạo vòng lặp Auto Join Cid Event
-            if autoJoinCidEventLoop then
-                task.cancel(autoJoinCidEventLoop)
-                autoJoinCidEventLoop = nil
-            end
-            autoJoinCidEventLoop = task.spawn(function()
-                while autoJoinCidEventEnabled do
-                    if not isPlayerInMap() then
-                        joinCidEvent()
-                        wait(cidEventTimeDelay)
-                    else
-                        print("Đang ở trong map, đợi đến khi rời khỏi map để tiếp tục Auto Join Cid Event")
-                    end
-                    wait(10) -- Kiểm tra lại sau mỗi 10 giây
-                end
-            end)
-        else
-            print("Auto Join Cid Event đã được tắt")
-            if autoJoinCidEventLoop then
-                task.cancel(autoJoinCidEventLoop)
-                autoJoinCidEventLoop = nil
-            end
-        end
-    end
-})
 
 -- Thêm section In-Game Controls
 local InGameSection = InGameTab:AddSection("Game Controls")
@@ -5712,203 +5606,3 @@ RCExchangeSection:AddToggle("BuyQuinqueToggle", {
     end
 })
 
--- Thêm section Evolve Tier trong tab Unit
-local EvolveTierSection = UnitTab:AddSection("Evolve Tier")
-
--- Biến lưu trạng thái
-_G.selectedEvolveTier = "Hyper" -- Mặc định là Hyper
-_G.autoEvolveEnabled = false
-_G.eligibleUnits = {}           -- Lưu danh sách unit hợp lệ để evolve
-
--- Hàm kiểm tra số lượng Ranger Crystal hiện có
-local function checkRangerCrystalAmount()
-    local player = game:GetService("Players").LocalPlayer
-    local playerName = player.Name
-    local playerData = game:GetService("ReplicatedStorage"):FindFirstChild("Player_Data")
-
-    if not playerData then return 0 end
-
-    local playerFolder = playerData:FindFirstChild(playerName)
-    if not playerFolder then return 0 end
-
-    local itemsFolder = playerFolder:FindFirstChild("Items")
-    if not itemsFolder then return 0 end
-
-    local rangerCrystal = itemsFolder:FindFirstChild("Ranger Crystal")
-    if not rangerCrystal then return 0 end
-
-    return rangerCrystal.Amount.Value
-end
-
--- Hàm để quét unit hợp lệ cho evolve
-local function scanEligibleUnits()
-    _G.eligibleUnits = {}
-
-    local player = game:GetService("Players").LocalPlayer
-    local playerName = player.Name
-    local playerData = game:GetService("ReplicatedStorage"):FindFirstChild("Player_Data")
-
-    if not playerData then
-        print("Không tìm thấy Player_Data")
-        return {}
-    end
-
-    local playerFolder = playerData:FindFirstChild(playerName)
-    if not playerFolder then
-        print("Không tìm thấy folder người chơi")
-        return {}
-    end
-
-    local collectionFolder = playerFolder:FindFirstChild("Collection")
-    if not collectionFolder then
-        print("Không tìm thấy Collection")
-        return {}
-    end
-
-    -- Tìm các unit hợp lệ để evolve (chưa evo và không bị lock)
-    for _, unit in pairs(collectionFolder:GetChildren()) do
-        -- Kiểm tra nếu unit này chưa evolve
-        local evolveTier = unit:FindFirstChild("EvolveTier")
-        -- Kiểm tra xem unit có bị lock không
-        local lock = unit:FindFirstChild("Lock")
-        -- Lấy tag của unit
-        local tag = unit:FindFirstChild("Tag")
-
-        -- Chỉ thêm vào danh sách nếu unit chưa evolve, không bị lock và có tag
-        if evolveTier and tag and lock then
-            if evolveTier.Value == "" and lock.Value == false then
-                table.insert(_G.eligibleUnits, {
-                    name = unit.Name,
-                    tag = tag.Value
-                })
-            end
-        end
-    end
-
-    return _G.eligibleUnits
-end
-
--- Hàm để thực hiện evolve unit
-local function evolveUnit(unitTag, tier)
-    local Remote = game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Server"):WaitForChild(
-    "Units"):WaitForChild("EvolveTier")
-
-    local args = {
-        unitTag,
-        tier
-    }
-
-    Remote:FireServer(unpack(args))
-    print("Đã evolve unit với tag: " .. unitTag .. " lên " .. tier)
-end
-
--- Dropdown để chọn tier
-EvolveTierSection:AddDropdown("EvolveTierDropdown", {
-    Title = "Select Tier",
-    Values = { "Hyper", "Ultra" },
-    Multi = false,
-    Default = _G.selectedEvolveTier,
-    Callback = function(Value)
-        _G.selectedEvolveTier = Value
-        print("Đã chọn tier: " .. Value)
-    end
-})
-
--- Nút Refresh để quét lại unit
-EvolveTierSection:AddButton({
-    Title = "Refresh Units",
-    Callback = function()
-        local units = scanEligibleUnits()
-        local crystalAmount = checkRangerCrystalAmount()
-        local maxEvolvable = math.floor(crystalAmount / 10)
-
-        print("Đã tìm thấy " .. #units .. " unit hợp lệ để evolve")
-        print("Bạn có " .. crystalAmount .. " Ranger Crystal (Có thể evolve tối đa " .. maxEvolvable .. " unit)")
-    end
-})
-
--- Toggle Auto Evolve
-EvolveTierSection:AddToggle("AutoEvolveToggle", {
-    Title = "Auto Evolve",
-    Default = _G.autoEvolveEnabled,
-    Callback = function(Value)
-        _G.autoEvolveEnabled = Value
-
-        if Value then
-            -- Scan lại danh sách unit hợp lệ
-            local units = scanEligibleUnits()
-            local crystalAmount = checkRangerCrystalAmount()
-            local maxEvolvable = math.floor(crystalAmount / 10)
-
-            if #units == 0 then
-                print("Không tìm thấy unit nào hợp lệ để evolve")
-                EvolveTierSection:GetComponent("AutoEvolveToggle"):Set(false)
-                return
-            end
-
-            if crystalAmount < 10 then
-                print("Không đủ Ranger Crystal để evolve (Cần ít nhất 10)")
-                EvolveTierSection:GetComponent("AutoEvolveToggle"):Set(false)
-                return
-            end
-
-            print("Bắt đầu Auto Evolve với tier " .. _G.selectedEvolveTier)
-            print("Bạn có " .. crystalAmount .. " Ranger Crystal (Có thể evolve tối đa " .. maxEvolvable .. " unit)")
-
-            -- Bắt đầu evolve
-            spawn(function()
-                local evolvedCount = 0
-
-                for i, unit in ipairs(units) do
-                    -- Kiểm tra lại số lượng Ranger Crystal hiện tại
-                    local currentCrystal = checkRangerCrystalAmount()
-                    if currentCrystal < 10 then
-                        print("Đã hết Ranger Crystal, dừng Auto Evolve")
-                        break
-                    end
-
-                    -- Kiểm tra nếu đã evolve đủ số unit có thể evolve
-                    if evolvedCount >= maxEvolvable then
-                        print("Đã evolve đủ số unit có thể evolve với số lượng Ranger Crystal hiện có")
-                        break
-                    end
-
-                    if _G.autoEvolveEnabled then
-                                                evolveUnit(unit.tag, _G.selectedEvolveTier)
-                        evolvedCount = evolvedCount + 1
-                        print("Đã evolve " .. evolvedCount .. "/" .. math.min(#units, maxEvolvable) .. " unit")
-                        
-                        -- Đợi 2 giây giữa các lần evolve để tránh ban và không evolve quá nhanh
-                        print("Đợi 2 giây trước khi evolve unit tiếp theo...")
-                        wait(2)
-                    else
-                        break
-                    end
-                end
-
-                -- Tự động tắt Auto Evolve khi hoàn thành
-                _G.autoEvolveEnabled = false
-                EvolveTierSection:GetComponent("AutoEvolveToggle"):Set(false)
-                print("Auto Evolve hoàn tất!")
-            end)
-        else
-            print("Auto Evolve đã được tắt")
-        end
-    end
-})
-
--- Hiển thị thông tin số lượng Ranger Crystal
-_G.crystalInfoLabel = EvolveTierSection:AddParagraph({
-    Title = "Ranger Crystal Info",
-    Content = "Chưa có thông tin"
-})
-
--- Cập nhật thông tin Crystal định kỳ
-spawn(function()
-    while wait(5) do
-        local amount = checkRangerCrystalAmount()
-        local maxEvolvable = math.floor(amount / 10)
-
-        _G.crystalInfoLabel:SetDesc("Số lượng: " .. amount .. "\nCó thể evolve: " .. maxEvolvable .. " unit")
-    end
-end)
