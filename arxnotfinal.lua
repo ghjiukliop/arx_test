@@ -5660,13 +5660,17 @@ local function joinCidEvent()
 end
 
 -- TextBox để nhập thời gian chờ Auto Join Cid Event
-CidEventSection:AddTextbox("CidEventTimeDelayInput", {
-    Title = "Thời Gian Chờ Cid Event (giây)",
+local cidEventTimeDelayInput = nil
+
+cidEventTimeDelayInput = CidEventSection:AddInput("CidEventTimeDelayInput", {
+    Title = "Thời Gian Chờ (≥5 giây)",
+    Placeholder = "Nhập số giây...",
     Default = tostring(cidEventTimeDelay),
-    Placeholder = "Nhập thời gian chờ (giây)...",
+    Numeric = true,
+    Finished = true,
     Callback = function(Value)
         local number = tonumber(Value)
-        if number and number >= 5 then -- Yêu cầu tối thiểu 5 giây để tránh spam
+        if number and number >= 5 then
             cidEventTimeDelay = number
             if ConfigSystem.CurrentConfig then
                 ConfigSystem.CurrentConfig.CidEventTimeDelay = number
@@ -5674,14 +5678,19 @@ CidEventSection:AddTextbox("CidEventTimeDelayInput", {
             end
             print("Thời gian chờ Auto Join Cid Event được đặt thành: " .. number .. " giây")
         else
+            print("Giá trị không hợp lệ (≥5)")
+            if cidEventTimeDelayInput and cidEventTimeDelayInput.Set then
+                cidEventTimeDelayInput:Set(tostring(cidEventTimeDelay))
+            end
             Fluent:Notify({
                 Title = "Lỗi",
-                Content = "Vui lòng nhập một số dương lớn hơn hoặc bằng 5 cho thời gian chờ.",
+                Content = "Vui lòng nhập một số nguyên ≥ 5.",
                 Duration = 3
             })
         end
     end
 })
+
 
 -- Toggle Auto Join Cid Event
 CidEventSection:AddToggle("AutoJoinCidEventToggle", {
