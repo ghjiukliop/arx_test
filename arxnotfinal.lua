@@ -447,8 +447,7 @@ ConfigSystem.DefaultConfig = {
     ChallengeTimeDelay = 5, 
     
     -- Cài đặt Cid Event
-    AutoJoinCidEvent = false, -- Cài đặt cho Auto Join Cid Event
-    CidEventTimeDelay = 5,
+ 
     -- Cài đặt In-Game
     AutoPlay = false,
     AutoRetry = false,
@@ -663,10 +662,7 @@ local autoChallengeEnabled = ConfigSystem.CurrentConfig.AutoChallenge or false
 
 local challengeTimeDelay = ConfigSystem.CurrentConfig.ChallengeTimeDelay or 5
 -- 
--- Biến lưu trạng thái và thời gian chờ Auto Join Cid Event
-local autoJoinCidEventEnabled = ConfigSystem.CurrentConfig.AutoJoinCidEvent or false
-local cidEventTimeDelay = ConfigSystem.CurrentConfig.CidEventTimeDelay or 5
-local autoJoinCidEventLoop = nil
+
 
 -- Biến lưu trạng thái In-Game
 local autoPlayEnabled = ConfigSystem.CurrentConfig.AutoPlay or false
@@ -2621,144 +2617,6 @@ ChallengeSection:AddToggle("AutoChallengeToggle", {
 })
 
 
-
--- Section: Cid Event trong tab Event
-local CidEventSection = EventTab:AddSection("Cid Event")
-
--- Kiểm tra xem CidEventSection có hợp lệ không
-if not CidEventSection or not CidEventSection.AddTextbox then
-    warn("CidEventSection không hỗ trợ AddTextbox. Kiểm tra phiên bản Fluent hoặc cấu hình EventTab.")
-    -- Fallback: Tạo một thông báo trong UI nếu AddTextbox không khả dụng
-    Fluent:Notify({
-        Title = "Lỗi UI",
-        Content = "Không thể tạo TextBox cho Cid Event. Vui lòng kiểm tra executor hoặc phiên bản script.",
-        Duration = 5
-    })
-    return -- Dừng thực thi phần này
-end
-
--- Hàm kiểm tra xem người chơi có đang ở trong map không
-local function isPlayerInMap()
-    local player = game:GetService("Players").LocalPlayer
-    if not player then
-        warn("Không tìm thấy LocalPlayer")
-        return false
-    end
-    return player:FindFirstChild("UnitsFolder") ~= nil
-end
-
--- Hàm tham gia Cid Event
-local function joinCidEvent()
-    local success, err = pcall(function()
-        -- Kiểm tra giá trị Level
-        local level = safeGetPath(game:GetService("ReplicatedStorage"), { "Values", "Game", "Level" }, 0.5)
-        if not level or not level.Value then
-            warn("Không tìm thấy giá trị Level trong ReplicatedStorage")
-            return false
-        end
-
-        -- Kiểm tra nếu đang ở Cid_Event
-        if level.Value == "Cid_Event" then
-            print("Đã ở trong Cid Event, không tham gia lại")
-            return false
-        end
-
-        -- Gửi lệnh tham gia Boss Event
-        local args = { "Boss-Event" }
-        local event = safeGetPath(game:GetService("ReplicatedStorage"), { "Remote", "Server", "PlayRoom", "Event" }, 2)
-        if event then
-            event:FireServer(unpack(args))
-            print("Tham gia sự kiện Cid Event thành công!")
-            return true
-        else
-            warn("Không tìm thấy Remote Event để tham gia Cid Event")
-            return false
-        end
-    end)
-
-    if not success then
-        warn("Lỗi khi tham gia Cid Event: " .. tostring(err))
-        return false
-    end
-    return success
-end
-
--- TextBox để nhập thời gian chờ Auto Join Cid Event
-CidEventSection:AddTextbox("CidEventTimeDelayInput", {
-    Title = "Thời Gian Chờ Cid Event (giây)",
-    Default = tostring(cidEventTimeDelay),
-    Placeholder = "Nhập thời gian chờ (giây)...",
-    Callback = function(Value)
-        local number = tonumber(Value)
-        if number and number >= 5 then -- Yêu cầu tối thiểu 5 giây để tránh spam
-            cidEventTimeDelay = number
-            if ConfigSystem.CurrentConfig then
-                ConfigSystem.CurrentConfig.CidEventTimeDelay = number
-                ConfigSystem.SaveConfig()
-            end
-            print("Thời gian chờ Auto Join Cid Event được đặt thành: " .. number .. " giây")
-        else
-            Fluent:Notify({
-                Title = "Lỗi",
-                Content = "Vui lòng nhập một số dương lớn hơn hoặc bằng 5 cho thời gian chờ.",
-                Duration = 3
-            })
-        end
-    end
-})
-
--- Toggle Auto Join Cid Event
-CidEventSection:AddToggle("AutoJoinCidEventToggle", {
-    Title = "Tự Động Tham Gia Cid Event",
-    Default = autoJoinCidEventEnabled,
-    Callback = function(Value)
-        autoJoinCidEventEnabled = Value
-        if ConfigSystem.CurrentConfig then
-            ConfigSystem.CurrentConfig.AutoJoinCidEvent = Value
-            ConfigSystem.SaveConfig()
-        end
-
-        if Value then
-            print("Tự động tham gia Cid Event đã được bật")
-            if isPlayerInMap() then
-                print("Đang ở trong map, Auto Join Cid Event sẽ hoạt động khi bạn trở về lobby")
-            else
-                -- Thực hiện join ngay lập tức nếu không ở trong map
-                task.spawn(function()
-                    wait(cidEventTimeDelay)
-                    if autoJoinCidEventEnabled and not isPlayerInMap() then
-                        joinCidEvent()
-                    end
-                end)
-            end
-
-            -- Hủy vòng lặp cũ nếu tồn tại
-            if autoJoinCidEventLoop then
-                task.cancel(autoJoinCidEventLoop)
-                autoJoinCidEventLoop = nil
-            end
-
-            -- Tạo vòng lặp Auto Join Cid Event
-            autoJoinCidEventLoop = task.spawn(function()
-                while autoJoinCidEventEnabled do
-                    if not isPlayerInMap() then
-                        joinCidEvent()
-                        wait(cidEventTimeDelay)
-                    else
-                        print("Đang ở trong map, đợi trở về lobby để tiếp tục Auto Join Cid Event")
-                        wait(10) -- Kiểm tra lại sau mỗi 10 giây
-                    end
-                end
-            end)
-        else
-            print("Tự động tham gia Cid Event đã được tắt")
-            if autoJoinCidEventLoop then
-                task.cancel(autoJoinCidEventLoop)
-                autoJoinCidEventLoop = nil
-            end
-        end
-    end
-})
 
 
 -- Thêm section In-Game Controls
@@ -5751,3 +5609,129 @@ RCExchangeSection:AddToggle("BuyQuinqueToggle", {
     end
 })
 
+
+-- Section: Cid Event trong tab Event
+local CidEventSection = EventTab:AddSection("Cid Event")
+
+-- Hàm kiểm tra xem người chơi có đang ở trong map không
+local function isPlayerInMap()
+    local player = game:GetService("Players").LocalPlayer
+    if not player then
+        warn("Không tìm thấy LocalPlayer")
+        return false
+    end
+    return player:FindFirstChild("UnitsFolder") ~= nil
+end
+
+-- Hàm tham gia Cid Event
+local function joinCidEvent()
+    local success, err = pcall(function()
+        -- Kiểm tra giá trị Level
+        local level = safeGetPath(game:GetService("ReplicatedStorage"), { "Values", "Game", "Level" }, 0.5)
+        if not level or not level.Value then
+            warn("Không tìm thấy giá trị Level trong ReplicatedStorage")
+            return false
+        end
+
+        -- Kiểm tra nếu đang ở Cid_Event
+        if level.Value == "Cid_Event" then
+            print("Đã ở trong Cid Event, không tham gia lại")
+            return false
+        end
+
+        -- Gửi lệnh tham gia Boss Event
+        local args = { "Boss-Event" }
+        local event = safeGetPath(game:GetService("ReplicatedStorage"), { "Remote", "Server", "PlayRoom", "Event" }, 2)
+        if event then
+            event:FireServer(unpack(args))
+            print("Tham gia sự kiện Cid Event thành công!")
+            return true
+        else
+            warn("Không tìm thấy Remote Event để tham gia Cid Event")
+            return false
+        end
+    end)
+
+    if not success then
+        warn("Lỗi khi tham gia Cid Event: " .. tostring(err))
+        return false
+    end
+    return success
+end
+
+-- TextBox để nhập thời gian chờ Auto Join Cid Event
+CidEventSection:AddTextbox("CidEventTimeDelayInput", {
+    Title = "Thời Gian Chờ Cid Event (giây)",
+    Default = tostring(cidEventTimeDelay),
+    Placeholder = "Nhập thời gian chờ (giây)...",
+    Callback = function(Value)
+        local number = tonumber(Value)
+        if number and number >= 5 then -- Yêu cầu tối thiểu 5 giây để tránh spam
+            cidEventTimeDelay = number
+            if ConfigSystem.CurrentConfig then
+                ConfigSystem.CurrentConfig.CidEventTimeDelay = number
+                ConfigSystem.SaveConfig()
+            end
+            print("Thời gian chờ Auto Join Cid Event được đặt thành: " .. number .. " giây")
+        else
+            Fluent:Notify({
+                Title = "Lỗi",
+                Content = "Vui lòng nhập một số dương lớn hơn hoặc bằng 5 cho thời gian chờ.",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- Toggle Auto Join Cid Event
+CidEventSection:AddToggle("AutoJoinCidEventToggle", {
+    Title = "Tự Động Tham Gia Cid Event",
+    Default = autoJoinCidEventEnabled,
+    Callback = function(Value)
+        autoJoinCidEventEnabled = Value
+        if ConfigSystem.CurrentConfig then
+            ConfigSystem.CurrentConfig.AutoJoinCidEvent = Value
+            ConfigSystem.SaveConfig()
+        end
+
+        if Value then
+            print("Tự động tham gia Cid Event đã được bật")
+            if isPlayerInMap() then
+                print("Đang ở trong map, Auto Join Cid Event sẽ hoạt động khi bạn trở về lobby")
+            else
+                -- Thực hiện join ngay lập tức nếu không ở trong map
+                task.spawn(function()
+                    wait(cidEventTimeDelay)
+                    if autoJoinCidEventEnabled and not isPlayerInMap() then
+                        joinCidEvent()
+                    end
+                end)
+            end
+
+            -- Hủy vòng lặp cũ nếu tồn tại
+            if autoJoinCidEventLoop then
+                task.cancel(autoJoinCidEventLoop)
+                autoJoinCidEventLoop = nil
+            end
+
+            -- Tạo vòng lặp Auto Join Cid Event
+            autoJoinCidEventLoop = task.spawn(function()
+                while autoJoinCidEventEnabled do
+                    if not isPlayerInMap() then
+                        joinCidEvent()
+                        wait(cidEventTimeDelay)
+                    else
+                        print("Đang ở trong map, đợi trở về lobby để tiếp tục Auto Join Cid Event")
+                        wait(10) -- Kiểm tra lại sau mỗi 10 giây
+                    end
+                end
+            end)
+        else
+            print("Tự động tham gia Cid Event đã được tắt")
+            if autoJoinCidEventLoop then
+                task.cancel(autoJoinCidEventLoop)
+                autoJoinCidEventLoop = nil
+            end
+        end
+    end
+})
